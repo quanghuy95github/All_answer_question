@@ -1,0 +1,64 @@
+﻿0.
+-Query SQL customer info:
+SELECT CONCAT(C1.firstname," ", C1.lastname) AS fullname, CONCAT(C2.city," ",C2.region) AS address FROM `customer_entity` C1 LEFT JOIN customer_address_entity C2 ON C1.entity_id = C2.parent_id;
+-Query SQL product name:
+SELECT value FROM `catalog_product_entity_varchar` AS A, (SELECT entity_id FROM `catalog_product_entity_varchar` WHERE attribute_id = 73 and store_id = 1) AS B WHERE attribute_id = 73 and store_id = 0 and A.entity_id <> B.entity_id UNION SELECT value FROM `catalog_product_entity_varchar` WHERE attribute_id = 73 and store_id = 1.
+
+- Example of using object manager directly to load a specific product from SKU
+
+1. answer When/where the layout loaded and parse in Magento?
+
+2. How do Magento locate the controller/action to be excuted?
+Tạo file routes.xml trong thư mục etc/frontend cho các action ở frontend và trong thư mục etc/adminhtml cho các action ở backend.
+Các thuộc tính trong routes.xml:
+- route id: Id đặc trưng của route
+- frontName: url của route
+- Module name: Tên của module.
+Khi truy cập url theo frontName, đường dẫn trong Controller sẽ được sử dụng. Controller/Actionpath/Actionclass.php
+
+3. How do Magento process from friendly URL to controller/action ? Where is the code implementation?
+- Các module cung cấp thông tin về route của chúng thông qua routeList trong Magento\Framework\App\R trong di.xml
+- FrontController thu thập các route active và check nếu request có thể thực thi.
+- Nếu request không thể thực thi, route mặc định sẽ được sử dụng
+- Nếu request có thể thực thi, router sẽ tìm route phù hợp với frontName và thông qua các module phù hợp
+
+Phương thưc dispatch() của Magento\Framework\App\Action\Action yêu cầu và trả về respone của nó
+
+Ở lớp này, class Magento\Framework\App\ActionInterface xử lý request thông qua các action của nó. Các lớp dưới đây cũng tham gia xử lý request
+- Magento\App\Framework\State cung cấp thông tin về trạng thái ứng dụng
+- Magento\App\Framework\Arealist cấu hình khu vực ứng dụng thông qua di.xml
+- Magento\App\Framework\FrontNameResolverInterface phân giải địa chỉ front name động
+4. What does each table in Magento do? How does Magento store product, customers in databse ?
+- Cơ sở dữ liệu trong Magento 2 được thiết kế theo mô hình EAV database(Entity-Attribute-Value). 
+Entity: Đối tượng đại diện cho các mục dữ liệu Magento như sản phẩm, danh mục khách hàng, đơn đặt hàng.Mỗi thực thể (sản phẩm, danh mục, vv) sẽ có bản ghi thực thể riêng của nó trong cơ sở dữ liệu. 
+Attribute: Các thuộc tính thể hiện các mục dữ liệu thuộc về một thực thể. Ví dụ: thực thể sản phẩm có các thuộc tính như tên, giá, trạng thái và nhiều tính năng khác. Value: Giá trị là đơn giản nhất để hiểu vì nó chỉ đơn giản là một giá trị được liên kết với một thuộc tính. Thay vì lưu trữ tất cả thông tin sản phẩm trong một bảng, Magento chia thông tin này thành các bảng phụ. bằng cách sử dụng bảng này có thể xây dựng một bản ghi sản phẩm đầy đủ từ các bảng thuộc tính và giá trị. 
+
+- Magento 2 lưu trữ product, Customer :
++ Customer: bảng customer_entity là bảng lưu trữ. 
++ Bảng Customer_entity là nơi lưu trữ thông tin chính về khách hàng.
++ Các bảng phụ :ustomer_entity_datetime, customer_entity_decimal, customer_entity_int, customer_entity_text, customer_entity_varchar chứa giá trị của các thuộc tính được phân loại theo loại dữ liệu tương ứng.
++ Catelog: bao gồm danh mục và sản phẩm.
++ Cách lưu trữ bảng danh mục tương tự như bảng của khách hàng, bảng chính là catalog_category_entity, các bảng phụ là các bảng có tiền tố như catalog_category. Cần lưu ý từ bảng này rằng parent_id là lưu trữ thông tin về mối quan hệ giữa các loại (loại chính).
++ Bảng catalog_category_product là để hiển thị mối quan hệ giữa sản phẩm và danh mục, sản phẩm nào thuộc loại nào.
++ Bảng có tiền tố catalog_product_entity giá trị lưu trữ của thuộc tính sản phẩm.
++ Bảng catalog_product_link thể hiện mối quan hệ giữa các sản phẩm, trong đó các loại mối quan hệ được lưu trữ trong catalog_product_link_type, các giá trị của các thuộc tính mối quan hệ được lưu trữ trong bảng khác với tiền tố tương ứng.
++ Bảng catalog_product_option chứa thông tin về các tùy chọn mà sản phẩm có thể có. Bảng này được liên kết với catalog_product_bundle_option
++ Bảng catalog_product_website hiển thị mối quan hệ giữa sản phẩm và trang web, sản phẩm trong Magento được tạo bởi các trang web riêng biệt.
+
+5. Purpose of each indexer?
+- Do mô hình CSDL mà megento sử dụng là dạng EAV nên việc truy xuất dữ liệu trở nên chậm và phức tạp. Các indexer được sinh ra nhằm giải quyết vấn đề đó bằng cách sẽ giúp chuyển đổi dữ liệu từ mô hình EAV → mô hình quan hệ để truy xuất đơn giản hơn.
+
+6. Purpose of flat tables ?
+- Sau khi đã chuyển đổi mô hình thì các flat tables chính là kiểu bảng ở mô hình quan hệ mà ta hay sủ dụng. Các bảng này sẽ được dùng để truy vấn ở ngoài frontend để cải thiện tốc độ truy vấn.
+
+7. Observer and plugin comparison?
+- Plugins: are used for changing the behavior of any original public method.
+- Observer: event handlers that listen to events they are attached to and respond to these events.
+8. How to use an event like this?
+$this->_eventManager->dispatch($this->_eventPrefix.  '_move_before', $eventParams);
+Sử dụng Observer, ví dụ căn bản như sau:
+b1: Tạo file Index.php theo directory app/code/Namespace/Module/Controller/Index/Index.php: nơi đây sẽ viết code dispatch như $this->_eventManager->dispatch($this->_eventPrefix.  '_move_before',  $eventParams);
+B2: Tạo file events.xml theo directory app/code/Namespace/Module/etc/events.xml: nơi đây sẽ khai báo sự kiện
+b3: Tạo file observer_xxx.php theo directory app/code/Namespace/Module/Observer/observer_xxx.php: nơi viết code observer khi event xảy ra.
+8. When do we have a conflict happen? And what happen when we have a conflict?
+- Conflict xảy ra khi có nhiều module cùng rewrite lại một class.
