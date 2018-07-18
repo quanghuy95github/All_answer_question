@@ -70,3 +70,14 @@ Following step:
 6. What is VirtualType in di.xml? Can we use a data provider class implementation instead of VirtualType ?
 - The virtualYype allows inserting different dependencies into the existing classes but not making any change to other classes.
 - - Yes, we can use a data provider class implementation instead of  VirtualType.
+
+7. What is the difference between custom EAV attributes and extension attributes ?
+Custom attribute là các thuộc tính tùy chọn của sản phẩm mà người quản trị có thể tự định nghĩa và tạo mới thông qua giao diện quản trị. Custom Attribute chỉ có tác dụng phân loại sản phẩm theo các thuộc tính thực của chúng.
+Extension Attribute là các thuộc tính được khởi tạo thông qua code, chúng có rất nhiều tính năng và không xuất hiện trong giao diện quản trị hệ thống.
+Extension Attribute có thể sử dụng trong tìm kiếm, filter collection, authentication user...
+
+8. How to customize UI component template?
+Để customize UI component templates ta có thể thực hiện thông qua extend file xml của template tương ứng hoặc thông qua modifer class
+
+9. How to customize a JS component (any JS module or component UI JS) ? 
+Để customize JS Component ta thực hiện thông qua extends module bằng hàm extend.()
